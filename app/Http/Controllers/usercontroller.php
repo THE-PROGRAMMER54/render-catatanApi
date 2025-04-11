@@ -25,11 +25,7 @@ class usercontroller extends Controller
             $email = $request->email;
 
             if(!Str::endsWith($email,["@gmail.com","@yahoo.com"])){
-
-                if(!Str::endsWith($email,[".com"])){
-                    $email = $email .= ".com";
-                }
-
+                return response()->json(["message" => "Email harus diakhiri dengan @gmail.com atau @yahoo.com"],422);
             }
 
             $user = new User();
@@ -51,15 +47,16 @@ class usercontroller extends Controller
                 'password' => 'required|string'
             ]);
             $user = User::where('email', $request->email)->first();
-            if($request->email != $user->email){
-                return response()->json(['error' => "email tidak terdaftar"],500);
+            if (!$user) {
+                return response()->json(['error' => "Email tidak terdaftar"], 422);
             }
+
             if(!Hash::check($request->password,$user->password)){
-                return response()->json(['error' => "password salah"],500);
+                return response()->json(['error' => "password salah"],422);
             }
             $token= JWTauth::attempt(['email' => $request->email,'password' => $request->password]);
             if(!$token){
-                return response()->json(['error' => "gagal login"],500);
+                return response()->json(['error' => "gagal login"],422);
             }
             return response()->json(['success' => "berhasil login", 'token' => $token], 200);
         }catch(Exception $e){
@@ -79,4 +76,72 @@ class usercontroller extends Controller
     }
 }
 
+
+    public function edituser(Request $request){
+        try{$user = JWTAuth::parseToken()->authenticate();
+            $updated = [];
+
+            if ($request->name) {
+                if ($user->name != $request->name) {
+                    $request->validate(['name' => 'string|min:1']);
+                    $user->name = $request->name;
+                $updated = ['name' => $request->name];
+                } else {
+                    return response()->json(['error' => 'Nama masih sama dengan sebelumnya'], 422);
+                }
+            }
+
+            if ($request->email) {
+                if ($user->email != $request->email) {
+                    $request->validate(['email' => 'email|unique:users,email,' . $user->id]);
+                    if(!Str::endsWith($request->email,["@gmail.com","@yahoo.com"])){
+                        return response()->json(["message" => "Email harus diakhiri dengan @gmail.com atau @yahoo.com"],422);
+                    }
+                    $user->email = $request->email;
+                    $updated = ['email' => $request->email];
+                } else {
+                    return response()->json(['error' => 'Email masih sama dengan sebelumnya'], 422);
+                }
+            }
+
+            if ($request->password) {
+                if (!password_verify($request->password, $user->password)) {
+                    $request->validate(['password' => 'string|min:8']);
+                    $user->password = bcrypt($request->password);
+                    $updated = ['password' => $request->password];
+                } else {
+                    return response()->json(['error' => 'Password masih sama dengan sebelumnya'], 422);
+                }
+            }
+
+            if ($updated == []) {
+                return response()->json(['error' => 'Tidak ada data yang diubah'], 422);
+            }
+
+            $user->save();
+            return response()->json(["success" => "berhasil merubah data"],200);
+        }catch(Exception $e){
+            return response()->json(["error" => "Gagal mengedit data anda","message" => $e->getMessage()],500);
+        }
+    }
+
+    public function hapususer(){
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+
+            if (!$user) {
+                return response()->json(["error" => "Gagal menghapus data anda"], 500);
+            }
+            JWTAuth::invalidate(JWTAuth::getToken());
+            $user->catatan()->delete();
+            $user->delete();
+
+            return response()->json(['success' => 'Akun berhasil dihapus'], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "error" => "Gagal menghapus data anda",
+                "message" => $e->getMessage()
+            ], 500);
+        }
+    }
 }
