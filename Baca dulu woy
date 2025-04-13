@@ -1,0 +1,14 @@
+lakukan ini agar bisa berjalan api nya
+
+1.composer install
+2.cp .env.example .env
+3.php artisan key:generate
+4.setup database di file env
+5.composer require tymon/jwt-auth
+6.php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+7.php artisan jwt:secret
+8.php artisan serve
+
+
+untuk desainnya ada di
+https://github.com/THE-PROGRAMMER54/catatan-extrachive
