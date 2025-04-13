@@ -44,7 +44,7 @@ class usercontroller extends Controller
         try{
             $request->validate([
                 'email' =>'required|email',
-                'password' => 'required|string'
+                'password' => 'required|min:8'
             ]);
             $user = User::where('email', $request->email)->first();
             if (!$user) {
