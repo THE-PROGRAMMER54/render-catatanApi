@@ -60,7 +60,7 @@ class usercontroller extends Controller
             }
             return response()->json(['success' => "berhasil login", 'token' => $token], 200);
         }catch(Exception $e){
-            return response()->json(['error' => "gagal login",$e], 500);
+            return response()->json(['error' => "gagal login","pesan" => $e], 500);
         }
     }
 

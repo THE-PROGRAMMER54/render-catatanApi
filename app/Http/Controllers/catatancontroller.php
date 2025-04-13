@@ -11,11 +11,9 @@ class catatancontroller extends Controller
 {
     public function index(){
         try{
-
-            JWTAuth::parseToken()->authenticate();
-            $data = catatan::all();
+            $user = JWTAuth::parseToken()->authenticate();
+            $data = $user->catatan;
             return response()->json(["data" => $data]);
-
         }catch(Exception $e){
 
             return response()->json(["error" => "gagal","massage" => $e->getMessage()]);
@@ -27,8 +25,8 @@ class catatancontroller extends Controller
         try{
             $user = JWTAuth::parseToken()->authenticate();
             $request->validate([
-                "judul" => "required|min:5|string",
-                "catatan" => "string|min:10|required"
+                "judul" => "required|min:5",
+                "catatan" => "min:10|required"
             ]);
 
             $data = catatan::where("user_id" , $user->id)->where("judul", $request->judul)->first();
