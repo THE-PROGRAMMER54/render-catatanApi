@@ -15,9 +15,7 @@ class catatancontroller extends Controller
             $data = $user->catatan;
             return response()->json(["data" => $data]);
         }catch(Exception $e){
-
             return response()->json(["error" => "gagal","massage" => $e->getMessage()]);
-
         }
     }
 
@@ -25,39 +23,43 @@ class catatancontroller extends Controller
         try{
             $user = JWTAuth::parseToken()->authenticate();
             $request->validate([
-                "judul" => "required|min:5",
-                "catatan" => "min:10|required"
+                "judul" => "required",
+                "catatan" => "required"
             ]);
-
             $data = catatan::where("user_id" , $user->id)->where("judul", $request->judul)->first();
-
             if(!$data){
-
                     $catat = new catatan;
                     $catat->user_id = $user->id;
                     $catat->judul = $request->judul;
                     $catat->catatan = $request->catatan;
                     $catat->save();
                     return response()->json(["success" => "data berhasil di tambahkan"],200);
-
             }else{
-
                 return response()->json(["error" => "data sudah ada"],409);
-
             }
         }catch(Exception $e){
-
-            return response()->json(["error" => "not error","message" => $e],500);
-
+            return response()->json(["error" => "not error","message" => $e->getMessage()],500);
         }
     }
 
+    public function geteditcatatan(string $id){
+        try{
+            JWTAuth::parseToken()->authenticate();
+            $data = catatan::where("id",$id)->first();
+            if(!$data){
+                return response()->json(["error" => "data tidak ada"],404);
+            }
+            return response()->json($data);
+        }catch(Exception $e){
+            return response()->json(["error" => "data error","message" => $e->getMessage()]);
+        }
+    }
     public function editcatatan(string $id,Request $request){
         try{
             JWTAuth::parseToken()->authenticate();
             $request->validate([
-                "judul" => "required|min:5",
-                "catatan" => "required|min:10"
+                "judul" => "required",
+                "catatan" => "required"
             ]);
             $data = catatan::where("id",$id)->first();
             if(!$data){

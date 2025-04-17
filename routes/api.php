@@ -16,5 +16,6 @@ Route::middleware('auth:api')->group(function() {
     Route::post('/addcatatan', [catatancontroller::class, 'addcatatan'])->name('addcatatan');
     Route::post('/editcatatan/{id}', [catatancontroller::class, 'editcatatan'])->name('editcatatan');
     Route::post('/hapuscatatan/{id}', [catatancontroller::class, 'hapuscatatan'])->name('hapuscatatan');
+    Route::post('geteditcatatan/{id}',[catatancontroller::class,'geteditcatatan'])->name('geteditcatatan');
     Route::post('/logout', [usercontroller::class, 'logout'])->name('logout');
 });
