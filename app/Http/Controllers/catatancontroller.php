@@ -12,7 +12,7 @@ class catatancontroller extends Controller
     public function index(){
         try{
             $user = JWTAuth::parseToken()->authenticate();
-            $data = $user->catatan;
+            $data = $user->catatan()->latest()->get();
             return response()->json(["data" => $data]);
         }catch(Exception $e){
             return response()->json(["error" => "gagal","massage" => $e->getMessage()]);
