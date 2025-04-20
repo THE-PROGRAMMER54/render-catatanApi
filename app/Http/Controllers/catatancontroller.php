@@ -9,15 +9,28 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class catatancontroller extends Controller
 {
-    public function index(){
-        try{
-            $user = JWTAuth::parseToken()->authenticate();
-            $data = $user->catatan()->latest()->get();
-            return response()->json(["data" => $data]);
-        }catch(Exception $e){
-            return response()->json(["error" => "gagal","massage" => $e->getMessage()]);
+    public function index(Request $request)
+{
+    try {
+        if (!$request->hasCookie("token")) {
+            return response()->json(["error" => "Token tidak ditemukan"], 401);
         }
+        $token = $request->cookie("token");
+        JWTAuth::setToken($token);
+        $user = JWTAuth::parseToken()->authenticate();
+        if (!$user) {
+            return response()->json(["error" => "Token tidak valid"], 401);
+        }
+        $data = $user->catatan()->latest()->get();
+        return response()->json(["data" => $data, "token" => $token]);
+
+    } catch (Exception $e) {
+        return response()->json([
+            "error" => "Gagal mengambil data",
+            "message" => $e->getMessage()
+        ], 500);
     }
+}
 
     public function addcatatan(Request $request){
         try{
@@ -84,7 +97,6 @@ class catatancontroller extends Controller
                 return response()->json(["error" => "data tidak ada"],404);
             }
             $data->delete();
-
             return response()->json(["success" => "catatan berhasil di hapus"],200);
         }catch(Exception $e){
             return response()->json(["error" => "not error","message" => $e],500);

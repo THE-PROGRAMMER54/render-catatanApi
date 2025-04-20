@@ -9,7 +9,7 @@ Route::middleware("guest.login")->group(function () {
     Route::post('/login', [usercontroller::class, 'login'])->name('login');
 });
 
-Route::middleware('auth:api')->group(function() {
+Route::middleware('user.login')->group(function() {
     Route::post('/edituser', [usercontroller::class, 'edituser'])->name('edituser');
     Route::post('/hapususer', [usercontroller::class, 'hapususer'])->name('hapususer');
     Route::get('/home',[catatancontroller::class, "index"])->name("home");

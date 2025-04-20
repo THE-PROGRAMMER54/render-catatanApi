@@ -44,13 +44,12 @@ class usercontroller extends Controller
         try{
             $request->validate([
                 'email' =>'required|email',
-                'password' => 'required|min:8'
+                'password' => 'required'
             ]);
             $user = User::where('email', $request->email)->first();
             if (!$user) {
                 return response()->json(['error' => "Email tidak terdaftar"], 422);
             }
-
             if(!Hash::check($request->password,$user->password)){
                 return response()->json(['error' => "password salah"],422);
             }
@@ -58,7 +57,7 @@ class usercontroller extends Controller
             if(!$token){
                 return response()->json(['error' => "gagal login"],422);
             }
-            return response()->json(['success' => "berhasil login", 'token' => $token], 200);
+            return response()->json(['success' => "berhasil login","token" => $token], 200)->cookie("token",$token,1440,'/',null,false,false);
         }catch(Exception $e){
             return response()->json(['error' => "gagal login","pesan" => $e], 500);
         }
@@ -125,18 +124,22 @@ class usercontroller extends Controller
         }
     }
 
-    public function hapususer(){
+    public function hapususer(Request $request){
         try {
-            $user = JWTAuth::parseToken()->authenticate();
+            if($request->hasCookie("token")){
+                $token = $request->cookie("token");
+                JWTAuth::setToken($token);
+                $user = JWTAuth::authenticate();
 
-            if (!$user) {
-                return response()->json(["error" => "Gagal menghapus data anda"], 500);
+                if (!$user) {
+                    return response()->json(["error" => "Gagal menghapus data anda"], 500);
+                }
+                JWTAuth::invalidate($token);
+                $user->catatan()->delete();
+                $user->delete();
+
+                return response()->json(['success' => 'Akun berhasil dihapus'], 200);
             }
-            JWTAuth::invalidate(JWTAuth::getToken());
-            $user->catatan()->delete();
-            $user->delete();
-
-            return response()->json(['success' => 'Akun berhasil dihapus'], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => "Gagal menghapus data anda",
