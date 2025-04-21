@@ -22,7 +22,7 @@ class catatancontroller extends Controller
             return response()->json(["error" => "Token tidak valid"], 401);
         }
         $data = $user->catatan()->latest()->get();
-        return response()->json(["data" => $data, "token" => $token]);
+        return response()->json(["data" => $data],200);
 
     } catch (Exception $e) {
         return response()->json([
@@ -34,7 +34,15 @@ class catatancontroller extends Controller
 
     public function addcatatan(Request $request){
         try{
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "Token tidak ditemukan"], 401);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
             $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(["error" => "Token tidak valid"], 401);
+            }
             $request->validate([
                 "judul" => "required",
                 "catatan" => "required"
@@ -55,9 +63,17 @@ class catatancontroller extends Controller
         }
     }
 
-    public function geteditcatatan(string $id){
+    public function geteditcatatan(string $id,Request $request){
         try{
-            JWTAuth::parseToken()->authenticate();
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "Token tidak ditemukan"], 401);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(["error" => "Token tidak valid"], 401);
+            }
             $data = catatan::where("id",$id)->first();
             if(!$data){
                 return response()->json(["error" => "data tidak ada"],404);
@@ -69,7 +85,15 @@ class catatancontroller extends Controller
     }
     public function editcatatan(string $id,Request $request){
         try{
-            JWTAuth::parseToken()->authenticate();
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "Token tidak ditemukan"], 401);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(["error" => "Token tidak valid"], 401);
+            }
             $request->validate([
                 "judul" => "required",
                 "catatan" => "required"
@@ -89,9 +113,17 @@ class catatancontroller extends Controller
         }
     }
 
-    public function hapuscatatan(string $id){
+    public function hapuscatatan(string $id,Request $request){
         try{
-            JWTAuth::parseToken()->authenticate();
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "Token tidak ditemukan"], 401);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(["error" => "Token tidak valid"], 401);
+            }
             $data = catatan::where("id",$id)->first();
             if(!$data){
                 return response()->json(["error" => "data tidak ada"],404);

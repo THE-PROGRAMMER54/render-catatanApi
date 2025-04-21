@@ -63,10 +63,19 @@ class usercontroller extends Controller
         }
     }
 
-    public function logout(){
+    public function logout(Request $request){
     try {
-        JWTAuth::parseToken()->invalidate();
-        return response()->json(['success' => "berhasil logout"], 200);
+        if(!$request->hasCookie("token")){
+            return response()->json(["error" => "token tidak ditemukan"]);
+        }
+        $token = $request->cookie("token");
+        JWTAuth::setToken($token);
+        $user = JWTAuth::parseToken()->authenticate();
+        if (!$user) {
+            return response()->json(["error" => "Token tidak valid"], 401);
+        }
+        JWTAuth::invalidate($token);
+        return response()->json(['success' => "berhasil logout"], 200)->cookie("token","",-1);
     } catch (Exception $e) {
         return response()->json([
             'error' => "Gagal logout",
@@ -77,7 +86,13 @@ class usercontroller extends Controller
 
 
     public function edituser(Request $request){
-        try{$user = JWTAuth::parseToken()->authenticate();
+        try{
+            if(!$request->hasCookie("token")){
+                return response()->json(["error" => "token tidak ditemukan"]);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
             $updated = [];
 
             if ($request->name) {
@@ -85,8 +100,6 @@ class usercontroller extends Controller
                     $request->validate(['name' => 'string|min:1']);
                     $user->name = $request->name;
                 $updated = ['name' => $request->name];
-                } else {
-                    return response()->json(['error' => 'Nama masih sama dengan sebelumnya'], 422);
                 }
             }
 
@@ -98,8 +111,6 @@ class usercontroller extends Controller
                     }
                     $user->email = $request->email;
                     $updated = ['email' => $request->email];
-                } else {
-                    return response()->json(['error' => 'Email masih sama dengan sebelumnya'], 422);
                 }
             }
 
@@ -108,8 +119,6 @@ class usercontroller extends Controller
                     $request->validate(['password' => 'string|min:8']);
                     $user->password = bcrypt($request->password);
                     $updated = ['password' => $request->password];
-                } else {
-                    return response()->json(['error' => 'Password masih sama dengan sebelumnya'], 422);
                 }
             }
 
@@ -126,20 +135,21 @@ class usercontroller extends Controller
 
     public function hapususer(Request $request){
         try {
-            if($request->hasCookie("token")){
-                $token = $request->cookie("token");
-                JWTAuth::setToken($token);
-                $user = JWTAuth::authenticate();
-
-                if (!$user) {
-                    return response()->json(["error" => "Gagal menghapus data anda"], 500);
-                }
-                JWTAuth::invalidate($token);
-                $user->catatan()->delete();
-                $user->delete();
-
-                return response()->json(['success' => 'Akun berhasil dihapus'], 200);
+            if(!$request->hasCookie("token")){
+                return response()->json(["error" => "token tidak ditemukan"],401);
             }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+
+            if (!$user) {
+               return response()->json(["error" => "Gagal menghapus data anda"], 500);
+            }
+            JWTAuth::invalidate($token);
+            $user->catatan()->delete();
+           $user->delete();
+
+           return response()->json(['success' => 'Akun berhasil dihapus'], 200);
         } catch (Exception $e) {
             return response()->json([
                 "error" => "Gagal menghapus data anda",
