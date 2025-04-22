@@ -15,3 +15,4 @@ use Illuminate\Support\Facades\Route;
     Route::post('/hapuscatatan/{id}', [catatancontroller::class, 'hapuscatatan'])->name('hapuscatatan');
     Route::post('geteditcatatan/{id}',[catatancontroller::class,'geteditcatatan'])->name('geteditcatatan');
     Route::post('/logout', [usercontroller::class, 'logout'])->name('logout');
+    Route::get('/getedituser', [usercontroller::class, 'getedituser'])->name('getedituser');

@@ -84,6 +84,26 @@ class usercontroller extends Controller
     }
 }
 
+    public function getedituser(Request $request){
+        try{
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "Token tidak ditemukan"], 401);
+            }
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(["error" => "Token tidak valid"], 401);
+            }
+            $data = User::where("id",$user->id)->first();
+            if(!$data){
+                return response()->json(["error" => "data tidak ada"],404);
+            }
+            return response()->json($data);
+        }catch(Exception $e){
+            return response()->json(["error" => "data error","message" => $e->getMessage()]);
+        }
+    }
 
     public function edituser(Request $request){
         try{
