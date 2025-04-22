@@ -113,13 +113,14 @@ class usercontroller extends Controller
             $token = $request->cookie("token");
             JWTAuth::setToken($token);
             $user = JWTAuth::parseToken()->authenticate();
-            $updated = [];
+            $name = [];
+            $email = [];
 
             if ($request->name) {
                 if ($user->name != $request->name) {
                     $request->validate(['name' => 'string|min:1']);
                     $user->name = $request->name;
-                $updated = ['name' => $request->name];
+                $name = ['name' => $request->name];
                 }
             }
 
@@ -130,26 +131,52 @@ class usercontroller extends Controller
                         return response()->json(["message" => "Email harus diakhiri dengan @gmail.com atau @yahoo.com"],422);
                     }
                     $user->email = $request->email;
-                    $updated = ['email' => $request->email];
+                    $email = ['email' => $request->email];
                 }
             }
-
-            if ($request->password) {
-                if (!password_verify($request->password, $user->password)) {
-                    $request->validate(['password' => 'string|min:8']);
-                    $user->password = bcrypt($request->password);
-                    $updated = ['password' => $request->password];
-                }
-            }
-
-            if ($updated == []) {
+            if (empty($email) && empty($name)) {
                 return response()->json(['error' => 'Tidak ada data yang diubah'], 422);
             }
 
             $user->save();
-            return response()->json(["success" => "berhasil merubah data"],200);
+            if (!empty($name) && !empty($email)) {
+                return response()->json(["success" => "Berhasil mengganti username dan email anda"], 200);
+            } elseif (!empty($name)) {
+                return response()->json(["success" => "Berhasil mengganti username anda"], 200);
+            } elseif (!empty($email)) {
+                return response()->json(["success" => "Berhasil mengganti email anda"], 200);
+            }
         }catch(Exception $e){
             return response()->json(["error" => "Gagal mengedit data anda","message" => $e->getMessage()],500);
+        }
+    }
+
+    public function ubahpassword(Request $request){
+        try {
+            if (!$request->hasCookie("token")) {
+                return response()->json(["error" => "token tidak ditemukan"]);
+            }
+
+            $token = $request->cookie("token");
+            JWTAuth::setToken($token);
+            $user = JWTAuth::parseToken()->authenticate();
+
+            $request->validate([
+                'password' => 'required|min:8',
+                'new_password' => 'required|min:8',
+                'confirm_password' => 'required|min:8|same:new_password'
+            ]);
+
+            if(!Hash::check($request->password,$user->password)){
+                return response()->json(['error' => "password salah"],422);
+            }
+
+            $user->password = bcrypt($request->new_password);
+            $user->save();
+
+            return response()->json(["success" => "Berhasil mengubah password anda"], 200);
+        } catch (Exception $e) {
+            return response()->json(["error" => "Gagal mengedit password anda", "message" => $e->getMessage()], 500);
         }
     }
 
@@ -169,7 +196,7 @@ class usercontroller extends Controller
             $user->catatan()->delete();
            $user->delete();
 
-           return response()->json(['success' => 'Akun berhasil dihapus'], 200);
+           return response()->json(['success' => 'Akun berhasil dihapus'], 200)->cookie('token','0',-1);
         } catch (Exception $e) {
             return response()->json([
                 "error" => "Gagal menghapus data anda",
